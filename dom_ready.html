@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>dom ready</title>
+	<script src="util.js"></script>
+	<script>
+		/**
+		 * Title: dom ready
+		 * Description:
+		 * 1. onload - after secondary resources(images, scripts,...) loaded(R2)
+		 * 2. closing of the body tag - 与脚本插入位置耦合(R3)
+		 * References: 
+		 * 1. http://www.cnblogs.com/zhangziqiu/archive/2011/06/27/DOMReady.html
+		 * 2. http://stackoverflow.com/questions/4395780/difference-bw-onload-and-document-readyfunction
+		 * 3. http://stackoverflow.com/questions/1845354/jquery-dom-ready
+		 * 4. https://github.com/ded/domready
+		 * 5. https://code.google.com/p/domready/
+		 */
+		var DOMReady = (function(window, document, util) {
+			var readyed = /^loaded|^complete/.test(document.readyState),
+				documentElement = document.documentElement,
+				needHack = documentElement.doScroll,
+				listeners = [];
+			if(!readyed){
+				// DOMContentLoaded 响应函数
+				function dispatch(){
+					var f;
+					// 只执行一次
+					if(!readyed){
+						readyed = true;
+						while(f = listeners.shift()){
+							f();
+						}
+					}
+				}
+				if(needHack){
+					// IE DOMContentLoaded - http://javascript.nwbox.com/IEContentLoaded/
+					(function check(){
+						try{	
+							documentElement.doScroll('left');
+						}catch(e){
+							window.setTimeout(check, 1);
+							return;
+						}
+						dispatch();
+					})();
+				}else {
+					document.addEventListener('DOMContentLoaded', function handler(){
+						document.removeEventListener('DOMContentLoaded', handler, false);
+						dispatch();
+					}, false);
+				}
+
+				// A fallback to window load, that will always work
+				util.addEvent(window, 'load', function handler(){
+					util.removeEvent(window, 'load', handler);
+					dispatch();
+				});
+			}
+			return function(fn){
+				readyed ? fn() : listeners.push(fn);
+			};
+		})(window, document, util);
+	</script>
+	<script>
+		var start = Date.now();
+		var readyed = false;
+
+		function log(message) {
+			$('dashboard').innerHTML += message + '<br>';
+		}
+		DOMReady(function() {
+			log((Date.now() - start) / 1000 + 's: DOMContentLoaded');
+		});
+		util.addEvent(document, 'readystatechange', function() {
+			var message = (Date.now() - start) / 1000 + 's: ' + document.readyState;
+			DOMReady(function() {
+				log(message);
+			});
+		});
+	</script>
+</head>
+<body>
+	<div id="dashboard"></div>
+	<img src="http://freetopwallpaper.com/wp-content/gallery/morning/beautiful-morning-picture-wallpaper-hd-21.jpg" alt="">
+	<script>
+		(function(){
+			var i = 10000;
+			while(i--){
+				document.write('<div>' + i + '</div>');
+			}
+		})();
+	</script>
+	<img src="http://stuffkit.com/wp-content/uploads/2012/07/Beautiful-Flowers-HD-Wallpapers-bouqet.jpg" alt="">
+</body>
+</html>

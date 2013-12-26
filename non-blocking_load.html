@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>non-blocking load</title>
+</head>
+<body>
+	<div id="a">
+		<p class="b"></p>
+	</div>
+	<!--
+		Title: non-blocking load
+		Description:
+		1. ie7-限制2个并行下载per hostname
+		2. ie7-Resources in the page are blocked from downloading if they are below the script, Elements are blocked from rendering if they are below the script
+		3. Deferred scripts, async scripts, and dynamically loaded scripts all will prevent the load event from firing until they’ve downloaded and executed, 
+		References:
+		1. http://www.stevesouders.com/blog/2009/04/27/loading-scripts-without-blocking/
+		2. http://www.yuiblog.com/blog/2008/07/22/non-blocking-scripts/
+	-->
+
+	<!-- 
+		optimization 1 - Deferred scripts execute before the DOMContentLoaded event and should execute in the order
+	-->
+	<script src="test.js" defer="defer"></script>
+
+	<!-- 
+		optimization 2 - async scripts execute as soon as the script is downloaded
+	-->
+	<script src="test.js" async="async"></script>
+	<script>
+		  // preferred 1 - scripts dynamically via DOM methods, not ensure order
+		 var util = (function(util, document) {
+		 	util.includeJS = function(src) {
+		 		var script = document.createElement('script');
+		 		script.src = src;
+		 		document.getElementsByTagName('head')[0].appendChild(script);
+		 	};
+		 	return util;
+		 })(util || {}, document);
+		  // preferred 2 - Coupling asynchronous scripts
+		  // references:
+		  // 1. http://www.stevesouders.com/blog/2008/12/27/coupling-async-scripts/
+		  // 2. http://www.phpied.com/javascript-include-ready-onload/
+		 var util = (function(util, document) {
+		 	var head = document.getElementsByTagName('head')[0],
+		 		script = document.createElement('script');
+		 	util.includeJS = function(src, callback) {
+		 		var loaded = false;
+		 		function fn() {
+		 			if (!loaded) {
+		 				loaded = true;
+		 				head.removeChild(script);
+		 				callback();
+		 			}
+		 		}
+		 		if ('onload' in script) {
+		 			script.onload = fn;
+		 		} else {
+		 			script.onreadystatechange = function() {
+		 				if (document.readyState === 'complete') {
+		 					fn();
+		 				}
+		 			};
+		 		}
+		 		script.src = src;
+		 		head.appendChild(script);
+		 	};
+		 	return util;
+		 })(util || {}, document);
+
+		 util.includeJS('http://code.jquery.com/jquery-1.10.1.js', function() {
+		 	$('#a .b').append('jquery has loaded');
+		 });
+	</script>
+	<img src="https://pbs.twimg.com/profile_images/378800000224813630/1c1ce26babf0393a6a64afdf0ad6f6b2.png" alt="">
+</body>
+</html>

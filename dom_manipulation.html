@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>dom manipulation</title>
+</head>
+<body>
+	<script>
+		/**
+		 * Title: DOM munipulation
+		 * Description: DOM munipulation is slow, reduce the number of times to modify dom tree, to reduce the number of times to repaint
+		 * References: http://velocityconf.com/velocityeu/public/schedule/detail/21634
+		 */
+
+		var i = 4,
+			p;
+		while(i--){
+			p = document.createElement('p');
+			document.body.appendChild(p);
+		}
+
+		// optimization 1 - use documentFragment, append once
+		var i = 4,
+			frag = document.createDocumentFragment();
+			p;
+		while(i--){
+			p = document.createElement('p');
+			frag.appendChild(document.createElement('p'));
+		}
+		document.body.appendChild(frag);
+
+		// preferred - use cloneNode
+		var i = 4,
+			frag = document.createDocumentFragment(),
+			ptpl = document.createElement('p'),
+			p;
+		while(i--){
+			p = ptpl.cloneNode(false);
+			frag.appendChild(p);
+		}
+		document.body.appendChild(frag);
+	</script>
+</body>
+</html>

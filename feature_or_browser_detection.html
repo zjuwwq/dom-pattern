@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>feature detection and browser detection</title>
+	<!--
+		Title: feature detection and browser detection
+		References: 
+		1. http://msdn.microsoft.com/en-us/magazine/hh475813.aspx
+		2. http://perfectionkills.com/detecting-event-support-without-browser-sniffing/
+		3. http://diveintohtml5.info/everything.html
+	
+	-->
+	<style type="text/css">
+	/* 浏览器支持的 feature detection */
+	    .target{
+	        -moz-border-radius: 20px;
+	        -webkit-border-radius: 20px;
+	        border-radius: 20px;
+	    }
+	</style>
+</head>
+<body>
+	<!-- 浏览器支持的 browser detection -->
+	<!--[if lte IE 7]>
+	  
+	<![endif]-->
+
+	<!-- 浏览器支持的 feature detection -->
+	<video>
+	    <source src="video.mp4" type='video/mp4' />
+	    <source src="video.webm" type='video/webm' />
+	    <object type="application/x-silverlight-2">
+	        <param name="source" value="http://url/player.xap">
+	        <param name="initParams" value="m=http://url/video.mp4">
+	    </object>
+	    Download the video <a href="video.mp4">here</a>.
+	</video>
+	<script>
+		/**
+		 * browser detection
+		 * Benifit: 不必每次应用不同特性的时候都判断
+		 * Drawback:
+		 * 1. 事先了解不同浏览器对特性的支持情况
+		 * 2. 无法向后兼容
+		 */
+		var ua = navigator.userAgent;
+		// 通过ua判断浏览器
+		
+		/**
+		 * feature detection 1
+		 */
+		if(window.addEventListener){
+			// do something
+		}else if(window.attachEvent){
+			// do something
+		}
+
+		/**
+		 * feature detection 2
+		 */
+		var isInputSupported = !!('oninput' in document.createElement('input'));
+
+		/**
+		 * feature detection 3
+		 */
+		var isSVGSupported = (function(){
+			var e = document.createElement('div');
+			e.innerHTML = '<svg></svg>';
+			return !!(window.SVGSVGElement && e.firstChild instanceof window.SVGSVGElement);
+		})();
+	</script>
+</body>
+</html>

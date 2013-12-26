@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>on text change</title>
+</head>
+<body>
+	<input id="input" type="text"><input type="text">
+	<div id="output">abcd</div>
+	<script src="util.js"></script>
+	<script>
+		/**
+		 * Title: on text change
+		 * Description: implement on text change with Cross-browser compatibility
+		 * References: http://benalpert.com/2013/06/18/a-near-perfect-oninput-shim-for-ie-8-and-9.html
+		 * Case:
+		 * 1. change fires only after the text field is defocused
+		 * 2. keyup doesn’t catch input that doesn’t involve the keyboard (e.g., pasting using the mouse) and only fires once if a key is held down
+		 * 3. keydown and keypress do fire repeatedly when a key is held down, but both fire immediately before the value change
+		 * 4. input is not supported in ie<=8
+		 * 5. propertychange also fire when value changed from js
+		 * 6. ie9 claim support input and propertychange, but not fire on deleting text
+		 */
+		var util = (function(util, window, document){
+			// Case 4, Case 6
+			var isInputSupported = 'oninput' in document.createElement('input') && (!document.documentMode || document.documentMode > 9),
+				addEvent = util.addEvent;
+			function addTextChangeEvent(element, handler){
+				var oldValue,
+					handlerProxy;
+				if (isInputSupported) {
+					addEvent(element, 'input', handler);
+				} else {
+					oldValue = element.value;
+					handlerProxy = function(event){
+						var input = util.eventTarget(event);
+						// 使用setTimeout解决keydown/paste/cut,..事件发生时，输入框文本内容还没有变化问题
+						setTimeout(function(){
+							var	value = input.value;
+							if(oldValue !== value){
+								oldValue = value;
+								handler({type: 'input', target: input});
+							}
+						}, 0);
+					};
+					// 使用keydown而不是keyup，解决Case 2
+					addEvent(element, 'keydown', handlerProxy);
+
+					addEvent(element, 'paste', handlerProxy);
+					addEvent(element, 'cut', handlerProxy);
+					// 处理将文本拖入输入框/从输入框拖出文本
+					addEvent(element, 'focus', handlerProxy);
+					addEvent(element, 'blur', handlerProxy);
+				}
+				return handlerProxy || handler;
+			}
+
+			util.addEvent = function(element, type, handler){
+				if(type === 'input'){
+					addTextChangeEvent(element, handler);
+				}else{
+					addEvent(element, type, handler);
+				}
+			};
+			return util;
+		})(util||{}, window, document);
+
+		util.addEvent($('input'), 'input', function(event) {
+			$('output').innerHTML = $('input').value;
+		});
+	</script>
+</body>
+</html>
